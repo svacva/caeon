@@ -5,7 +5,7 @@ TELEGRAM_API = 27731966
 TELEGRAM_HASH = "a94bbe4569ffcb3db064a59a40f2a7b8"
 
 # SEMI-REQUIRED, WE SUGGEST TO FILL IT FROM MONGODB
-DATABASE_URL = ""
+DATABASE_URL = "mongodb+srv://cva5545:IUOHUwWxVdlDyzbH@cluster0.l031f.mongodb.net/?retryWrites=true&w=majority"
 
 # OPTIONAL CONFIG
 TG_PROXY = {}
