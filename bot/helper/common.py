@@ -844,7 +844,8 @@ class TaskConfig:
             if not new_name:
                 return dl_path
             new_path = ospath.join(up_dir, new_name)
-            await move(dl_path, new_path)
+            with contextlib.suppress(Exception):
+                await move(dl_path, new_path)
             return new_path
         for dirpath, _, files in await sync_to_async(walk, dl_path, topdown=False):
             for file_ in files:
@@ -852,7 +853,38 @@ class TaskConfig:
                 new_name = perform_substitution(file_, self.name_sub)
                 if not new_name:
                     continue
-                await move(f_path, ospath.join(dirpath, new_name))
+                with contextlib.suppress(Exception):
+                    await move(f_path, ospath.join(dirpath, new_name))
+        return dl_path
+
+    async def remove_www_prefix(self, dl_path):
+        def clean_filename(name):
+            return sub(
+                r"^www\.[^ ]+\s*-\s*|\s*^www\.[^ ]+\s*",
+                "",
+                name,
+                flags=IGNORECASE,
+            ).lstrip()
+
+        if self.is_file:
+            up_dir, name = dl_path.rsplit("/", 1)
+            new_name = clean_filename(name)
+            if new_name == name:
+                return dl_path
+            new_path = ospath.join(up_dir, new_name)
+            with contextlib.suppress(Exception):
+                await move(dl_path, new_path)
+            return new_path
+
+        for dirpath, _, files in await sync_to_async(walk, dl_path, topdown=False):
+            for file_ in files:
+                f_path = ospath.join(dirpath, file_)
+                new_name = clean_filename(file_)
+                if new_name == file_:
+                    continue
+                with contextlib.suppress(Exception):
+                    await move(f_path, ospath.join(dirpath, new_name))
+
         return dl_path
 
     async def generate_screenshots(self, dl_path):
@@ -1148,7 +1180,7 @@ class TaskConfig:
                     res = await ffmpeg.metadata_watermark_cmds(cmd, dl_path)
                     if res:
                         os.replace(temp_file, dl_path)
-                    else:
+                    elif await aiopath.exists(temp_file):
                         os.remove(temp_file)
         else:
             for dirpath, _, files in await sync_to_async(
@@ -1186,7 +1218,7 @@ class TaskConfig:
                             )
                             if res:
                                 os.replace(temp_file, file_path)
-                            else:
+                            elif await aiopath.exists(temp_file):
                                 os.remove(temp_file)
         if checked:
             cpu_eater_lock.release()
@@ -1216,7 +1248,7 @@ class TaskConfig:
                     res = await ffmpeg.metadata_watermark_cmds(cmd, dl_path)
                     if res:
                         os.replace(temp_file, dl_path)
-                    else:
+                    elif await aiopath.exists(temp_file):
                         os.remove(temp_file)
         else:
             for dirpath, _, files in await sync_to_async(
@@ -1253,7 +1285,7 @@ class TaskConfig:
                             )
                             if res:
                                 os.replace(temp_file, file_path)
-                            else:
+                            elif await aiopath.exists(temp_file):
                                 os.remove(temp_file)
         if checked:
             cpu_eater_lock.release()
@@ -1283,7 +1315,7 @@ class TaskConfig:
                     res = await ffmpeg.metadata_watermark_cmds(cmd, dl_path)
                     if res:
                         os.replace(temp_file, dl_path)
-                    else:
+                    elif await aiopath.exists(temp_file):
                         os.remove(temp_file)
         else:
             for dirpath, _, files in await sync_to_async(
@@ -1320,7 +1352,7 @@ class TaskConfig:
                             )
                             if res:
                                 os.replace(temp_file, file_path)
-                            else:
+                            elif await aiopath.exists(temp_file):
                                 os.remove(temp_file)
         if checked:
             cpu_eater_lock.release()
